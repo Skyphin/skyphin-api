@@ -20,6 +20,10 @@ func (s *UserService) GetUserByID(id uint) (*models.User, error) {
 	return s.repo.FindByID(id)
 }
 
+func (s *UserService) GetUserByUsername(username string) (*models.User, error) {
+	return s.repo.FindByUsername(username)
+}
+
 func (s *UserService) CreateUser(req *models.CreateUserRequest) error {
 	if _, err := s.repo.FindByUsername(req.Username); err == nil {
 		return errors.New("username already exists")

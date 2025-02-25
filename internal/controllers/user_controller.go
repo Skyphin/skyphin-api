@@ -33,7 +33,7 @@ func (c *UserController) CreateUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, req.Email)
 }
 
-func (c *UserController) GetUser(ctx *gin.Context) {
+func (c *UserController) GetUserById(ctx *gin.Context) {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 64)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
