@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"skyphin-api/graph"
 	"skyphin-api/internal/config"
 	"skyphin-api/internal/controllers"
 	"skyphin-api/internal/middleware"
@@ -11,6 +12,13 @@ import (
 	"skyphin-api/internal/services"
 	"skyphin-api/pkg/database"
 
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/lru"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/vektah/gqlparser/v2/ast"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -18,14 +26,20 @@ import (
 func main() {
 	cfg := loadConfig()
 	db := connectDatabase(cfg)
-	migrateDatabase(db)
+	if err := migrateDatabase(db); err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
 
 	userRepo, authRepo := initializeRepositories(db)
 	userService, authService := initializeServices(userRepo, authRepo, cfg)
 	userController, authController := initializeControllers(userService, authService)
 	authMiddleware := middleware.NewAuthMiddleware(authService, cfg)
 
-	router := setupRouter(userController, authController, authMiddleware)
+	router := gin.Default()
+
+	setupRestRoutes(userController, authController, authMiddleware)
+
+	setupGraphQL(router, authMiddleware)
 
 	startServer(router, cfg)
 }
@@ -46,10 +60,13 @@ func connectDatabase(cfg config.Config) *gorm.DB {
 	return db
 }
 
-func migrateDatabase(db *gorm.DB) {
-	if err := db.AutoMigrate(&models.User{}, &models.AccessToken{}, &models.RefreshToken{}, &models.VerificationToken{}, &models.ResetToken{}); err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
+func migrateDatabase(db *gorm.DB) error {
+	if err := db.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"").Error; err != nil {
+		return err
 	}
+	err := db.AutoMigrate(&models.User{}, &models.AccessToken{}, &models.RefreshToken{}, &models.VerificationToken{}, &models.ResetToken{})
+
+	return err
 }
 
 func initializeRepositories(db *gorm.DB) (*repositories.UserRepository, *repositories.AuthRepository) {
@@ -70,7 +87,7 @@ func initializeControllers(userService *services.UserService, authService *servi
 	return userController, authController
 }
 
-func setupRouter(userController *controllers.UserController, authController *controllers.AuthController, authMiddleware *middleware.AuthMiddleware) *gin.Engine {
+func setupRestRoutes(userController *controllers.UserController, authController *controllers.AuthController, authMiddleware *middleware.AuthMiddleware) *gin.Engine {
 	router := gin.Default()
 
 	router.POST("/users", userController.CreateUser)
@@ -86,6 +103,25 @@ func setupRouter(userController *controllers.UserController, authController *con
 		// TODO
 	}
 	return router
+}
+
+func setupGraphQL(router *gin.Engine, authMiddleware *middleware.AuthMiddleware) {
+	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+
+	srv.AddTransport(transport.Options{})
+	srv.AddTransport(transport.GET{})
+	srv.AddTransport(transport.POST{})
+
+	srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))
+
+	srv.Use(extension.Introspection{})
+	srv.Use(extension.AutomaticPersistedQuery{
+		Cache: lru.New[string](100),
+	})
+
+	router.GET("/graphql", gin.WrapH(playground.Handler("GraphQL playground", "/query")))
+
+	router.POST("/query", authMiddleware.Authenticate(), gin.WrapH(srv))
 }
 
 func startServer(router *gin.Engine, cfg config.Config) {

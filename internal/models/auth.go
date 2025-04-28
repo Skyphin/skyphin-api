@@ -3,32 +3,32 @@ package models
 import "time"
 
 type VerificationToken struct {
-	ID        uint   `gorm:"primaryKey"`
-	UserID    uint   `gorm:"index"`
+	ID        string `gorm:"primaryKey"`
+	UserID    string `gorm:"index"`
 	Token     string `gorm:"token"`
 	ExpiresAt time.Time
 	CreatedAt time.Time
 }
 
 type AccessToken struct {
-	ID        uint   `gorm:"primaryKey"`
-	UserID    uint   `gorm:"index"`
+	ID        string `gorm:"primaryKey"`
+	UserID    string `gorm:"index"`
 	Token     string `gorm:"token"`
 	ExpiresAt time.Time
 	CreatedAt time.Time
 }
 
 type RefreshToken struct {
-	ID        uint   `gorm:"primaryKey"`
-	UserID    uint   `gorm:"index"`
+	ID        string `gorm:"primaryKey"`
+	UserID    string `gorm:"index"`
 	Token     string `gorm:"token"`
 	ExpiresAt time.Time
 	CreatedAt time.Time
 }
 
 type ResetToken struct {
-	ID        uint   `gorm:"primaryKey"`
-	UserID    uint   `gorm:"index"`
+	ID        string `gorm:"primaryKey"`
+	UserID    string `gorm:"index"`
 	Token     string `gorm:"token"`
 	ExpiresAt time.Time
 	CreatedAt time.Time

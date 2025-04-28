@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"net/http"
-	"strconv"
 
 	"skyphin-api/internal/models"
 	"skyphin-api/internal/services"
@@ -34,13 +33,8 @@ func (c *UserController) CreateUser(ctx *gin.Context) {
 }
 
 func (c *UserController) GetUserById(ctx *gin.Context) {
-	id, err := strconv.ParseUint(ctx.Param("id"), 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
-		return
-	}
-
-	user, err := c.service.GetUserByID(uint(id))
+	id := ctx.Param("id")
+	user, err := c.service.GetUserByID(id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return

@@ -1,0 +1,91 @@
+scalar DateTime
+
+# Core Types
+
+type User {
+  id: ID!
+  username: String!
+  email: String!
+}
+
+type Comment {
+  id: ID!
+  url: String!
+  parentCommentId: ID
+  content: String!
+  author: User!
+  createdAt: DateTime!
+  upvoteCount: Int!
+  downvoteCount: Int!
+  replyCount: Int!
+
+  replies(first: Int, after: String): CommentConnection!
+}
+
+type UrlVoteResult {
+  url: String!
+  upvoteCount: Int!
+  downvoteCount: Int!
+}
+
+# Connections (Pagination)
+
+type CommentEdge {
+  node: Comment!
+  cursor: String!
+}
+
+type CommentConnection {
+  edges: [CommentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  endCursor: String
+}
+
+# Query Root
+
+type Query {
+  comments(url: String!, first: Int, after: String): CommentConnection!
+  comment(id: ID!): Comment!
+  votes(url: String!): UrlVoteResult!
+  commentsCount(url: String!): Int!
+}
+
+# Mutation Root
+
+type Mutation {
+  addComment(input: AddCommentInput!): Comment!
+  addReply(input: AddReplyInput!): Comment!
+  upvoteComment(commentId: ID!): Comment!
+  downvoteComment(commentId: ID!): Comment!
+  upvoteUrl(url: String!): UrlVoteResult!
+  downvoteUrl(url: String!): UrlVoteResult!
+}
+
+# Subscription Root (Realtime)
+
+type Subscription {
+  commentAdded(url: String!): Comment!
+  typingComment(url: String!): Comment!
+  replyAdded(url: String!, commentId: ID!): Comment!
+  typingReply(url: String!, commentId: ID!): Comment!
+  commentVoted(commentId: ID!): Comment!
+  urlVoted(url: String!): UrlVoteResult!
+}
+
+# Inputs for Mutations
+
+input AddCommentInput {
+  url: String!
+  content: String!
+}
+
+input AddReplyInput {
+  url: String!
+  parentCommentId: ID!
+  content: String!
+}
