@@ -23,7 +23,7 @@ func NewAuthService(userRepo *repositories.UserRepository, authRepo *repositorie
 	return &AuthService{userRepo: userRepo, authRepo: authRepo, cfg: cfg}
 }
 
-func (s *AuthService) GenerateVerificationToken(userID uint) (string, error) {
+func (s *AuthService) GenerateVerificationToken(userID string) (string, error) {
 	token, err := generateRandomToken(32)
 	if err != nil {
 		return "", err
@@ -151,7 +151,7 @@ func (s *AuthService) GenerateTokens(user *models.User) (string, string, error) 
 	return accessToken, refreshToken, nil
 }
 
-func (s *AuthService) generateAccessToken(userID uint) (string, error) {
+func (s *AuthService) generateAccessToken(userID string) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"exp":     time.Now().Add(time.Minute * time.Duration(s.cfg.Auth.AccessTokenExpiryMinutes)).Unix(),
@@ -176,7 +176,7 @@ func (s *AuthService) generateAccessToken(userID uint) (string, error) {
 	return signedToken, nil
 }
 
-func (s *AuthService) generateRefreshToken(userID uint) (string, error) {
+func (s *AuthService) generateRefreshToken(userID string) (string, error) {
 	refreshTokenStr, err := generateRandomToken(64)
 	if err != nil {
 		return "", err

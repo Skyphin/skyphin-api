@@ -1,0 +1,58 @@
+#https://gqlgen.com/config/
+schema:
+  - graph/*.graphqls
+
+exec:
+  package: graph
+  layout: single-file
+  filename: graph/generated.go
+
+model:
+  filename: graph/model/models_gen.go
+  package: model
+
+resolver:
+  package: graph
+  layout: single-file
+  filename: graph/resolver.go
+  omit_template_comment: true
+  resolver_template: graph/resolver.go
+  preserve_resolver: true 
+
+autobind:
+  - "skyphin-api/internal/models"
+
+models:
+  # Core types
+  Comment:
+    model: "skyphin-api/internal/models.Comment"
+  User:
+    model: "skyphin-api/internal/models.User"
+  URLVoteResult:
+    model: "skyphin-api/internal/models.URLVoteResult"
+  
+  # Input types
+  AddCommentInput:
+    model: "skyphin-api/internal/models.AddCommentInput"
+  AddReplyInput:
+    model: "skyphin-api/internal/models.AddReplyInput"
+  
+  # Pagination types
+  PageInfo:
+    model: "skyphin-api/internal/models.PageInfo"
+  CommentConnection:
+    model: "skyphin-api/internal/models.CommentConnection"
+  CommentEdge:
+    model: "skyphin-api/internal/models.CommentEdge"
+  
+  # Enums
+  VoteType:
+    model: "skyphin-api/internal/models.VoteType"
+
+  # Built-in scalars
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.ID
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
